@@ -1,0 +1,128 @@
+# quant-algo
+
+**AMHANi Enterprise — Algorithmic Trading System**
+
+A CLI-first quantitative trading pipeline built in Python. Fetches market data, computes indicators, generates signals, backtests strategies, and executes paper (or live) trades via Alpaca.
+
+---
+
+## Project Stages
+
+| Stage | Focus | Status |
+|-------|-------|--------|
+| 0 | Repo & Environment | ✅ Complete |
+| 1 | Data Layer | 🔲 Pending |
+| 2 | Indicators Engine | 🔲 Pending |
+| 3 | Signal Generation | 🔲 Pending |
+| 4 | Backtesting | 🔲 Pending |
+| 5 | Execution (Paper → Live) | 🔲 Pending |
+
+---
+
+## Setup
+
+### 1. Clone the repo
+
+```bash
+git clone https://github.com/<your-username>/quant-algo.git
+cd quant-algo
+```
+
+### 2. Create and activate virtual environment
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate        # Linux/macOS
+# .venv\Scripts\activate         # Windows
+```
+
+### 3. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Configure secrets
+
+```bash
+cp .env.example .env
+# Open .env and fill in your API keys
+```
+
+### 5. Configure settings
+
+```bash
+cp config/settings.example.yaml config/settings.yaml
+# Open config/settings.yaml and adjust parameters
+```
+
+---
+
+## CLI Commands
+
+All commands support `--help` for full usage details.
+
+```bash
+# Check version and available commands
+python main.py --help
+
+# Fetch OHLCV data (Stage 1)
+python main.py fetch --ticker AAPL --from 2023-01-01 --to 2024-01-01 --source polygon
+
+# Compute indicators (Stage 2)
+python main.py indicators --ticker AAPL --indicators RSI,EMA --period 14
+
+# Generate signals (Stage 3)
+python main.py signals --ticker AAPL --strategy ema_cross
+
+# Run backtest (Stage 4)
+python main.py backtest --ticker AAPL --strategy ema_cross --from 2022-01-01
+
+# Paper trade (Stage 5)
+python main.py trade --ticker AAPL --strategy ema_cross --mode paper
+```
+
+---
+
+## Environment Variables
+
+| Variable | Description |
+|---|---|
+| `POLYGON_API_KEY` | Polygon.io API key |
+| `ALPACA_API_KEY` | Alpaca paper/live API key |
+| `ALPACA_SECRET_KEY` | Alpaca secret key |
+| `ALPACA_BASE_URL` | Alpaca endpoint (paper or live) |
+| `ENV` | `development` or `production` |
+
+> ⚠️ Never commit `.env` or `config/settings.yaml`. Both are in `.gitignore`.
+
+---
+
+## Project Structure
+
+```
+quant-algo/
+├── .env.example               ← safe template (committed)
+├── .env                       ← your real secrets (git-ignored)
+├── config/
+│   ├── settings.example.yaml  ← safe template (committed)
+│   └── settings.yaml          ← your real config (git-ignored)
+├── src/
+│   ├── data/                  ← Stage 1: polygon + yfinance clients
+│   ├── indicators/            ← Stage 2: pandas-ta wrappers
+│   ├── signals/               ← Stage 3: signal generators
+│   ├── backtest/              ← Stage 4: backtesting runner
+│   └── execution/             ← Stage 5: Alpaca order management
+├── strategies/                ← Strategy implementations
+├── tests/                     ← Unit tests
+├── logs/                      ← Runtime logs (git-ignored)
+├── results/                   ← Backtest outputs (git-ignored)
+├── requirements.txt
+└── main.py                    ← CLI entry point
+```
+
+---
+
+## License
+
+Private — AMHANi Enterprise

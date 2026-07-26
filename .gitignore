@@ -1,0 +1,46 @@
+# ── Secrets & Config (NEVER commit these) ─────────────────────────────────────
+.env
+config/settings.yaml
+
+# ── Data (fetched at runtime, can be large) ───────────────────────────────────
+data/
+data/raw/
+data/processed/
+*.csv
+*.parquet
+*.db
+*.sqlite
+
+# ── Runtime Outputs ───────────────────────────────────────────────────────────
+logs/
+results/
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── OS & Editor ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ── Jupyter (if used for exploration) ─────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── Testing & Coverage ────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
