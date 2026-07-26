@@ -1,22 +1,22 @@
-# ── Data Sources ──────────────────────────────────────────────────────────────
+# Data Sources 
 polygon-api-client==1.14.2
 yfinance==0.2.54
 
-# ── Indicators ────────────────────────────────────────────────────────────────
+# Indicators 
 pandas-ta==0.3.14b
 
-# ── Backtesting ───────────────────────────────────────────────────────────────
+# Backtesting 
 backtesting==0.3.3
 vectorbt==0.26.2
 
-# ── Execution ─────────────────────────────────────────────────────────────────
+# Execution 
 alpaca-trade-api==3.3.0
 
-# ── CLI & Config ──────────────────────────────────────────────────────────────
+# CLI & Config 
 click==8.1.8
 python-dotenv==1.0.1
 pyyaml==6.0.2
 
-# ── Core Data Stack ───────────────────────────────────────────────────────────
+# Core Data Stack 
 pandas==2.2.3
 numpy==1.26.4
