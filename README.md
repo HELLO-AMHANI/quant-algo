@@ -66,19 +66,19 @@ All commands support `--help` for full usage details.
 # Check version and available commands
 python main.py --help
 
-# Fetch OHLCV data (Stage 1)
+# Fetch OHLCV data Stage 1
 python main.py fetch --ticker AAPL --from 2023-01-01 --to 2024-01-01 --source polygon
 
-# Compute indicators (Stage 2)
+# Compute indicators Stage 2
 python main.py indicators --ticker AAPL --indicators RSI,EMA --period 14
 
-# Generate signals (Stage 3)
+# Generate signals Stage 3
 python main.py signals --ticker AAPL --strategy ema_cross
 
-# Run backtest (Stage 4)
+# Run backtest Stage 4
 python main.py backtest --ticker AAPL --strategy ema_cross --from 2022-01-01
 
-# Paper trade (Stage 5)
+# Paper trade Stage 5
 python main.py trade --ticker AAPL --strategy ema_cross --mode paper
 ```
 
@@ -95,31 +95,6 @@ python main.py trade --ticker AAPL --strategy ema_cross --mode paper
 | `ENV` | `development` or `production` |
 
 > ⚠️ Never commit `.env` or `config/settings.yaml`. Both are in `.gitignore`.
-
----
-
-## Project Structure
-
-```
-quant-algo/
-├── .env.example               ← safe template (committed)
-├── .env                       ← your real secrets (git-ignored)
-├── config/
-│   ├── settings.example.yaml  ← safe template (committed)
-│   └── settings.yaml          ← your real config (git-ignored)
-├── src/
-│   ├── data/                  ← Stage 1: polygon + yfinance clients
-│   ├── indicators/            ← Stage 2: pandas-ta wrappers
-│   ├── signals/               ← Stage 3: signal generators
-│   ├── backtest/              ← Stage 4: backtesting runner
-│   └── execution/             ← Stage 5: Alpaca order management
-├── strategies/                ← Strategy implementations
-├── tests/                     ← Unit tests
-├── logs/                      ← Runtime logs (git-ignored)
-├── results/                   ← Backtest outputs (git-ignored)
-├── requirements.txt
-└── main.py                    ← CLI entry point
-```
 
 ---
 
