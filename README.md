@@ -81,21 +81,6 @@ python main.py backtest --ticker AAPL --strategy ema_cross --from 2022-01-01
 # Paper trade Stage 5
 python main.py trade --ticker AAPL --strategy ema_cross --mode paper
 ```
-
----
-
-## Environment Variables
-
-| Variable | Description |
-|---|---|
-| `POLYGON_API_KEY` | Polygon.io API key |
-| `ALPACA_API_KEY` | Alpaca paper/live API key |
-| `ALPACA_SECRET_KEY` | Alpaca secret key |
-| `ALPACA_BASE_URL` | Alpaca endpoint (paper or live) |
-| `ENV` | `development` or `production` |
-
-> ⚠️ Never commit `.env` or `config/settings.yaml`. Both are in `.gitignore`.
-
 ---
 
 ## License
