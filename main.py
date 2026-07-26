@@ -20,7 +20,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import click
 
-# ── Bootstrap ─────────────────────────────────────────────────────────────────
+# Bootstrap 
 
 # Load .env from project root
 load_dotenv()
@@ -61,7 +61,7 @@ def setup_logging(level: str = "INFO") -> None:
     )
 
 
-# ── CLI Root ──────────────────────────────────────────────────────────────────
+# CLI Root
 
 @click.group()
 @click.version_option(version="0.1.0", prog_name="quant-algo")
@@ -82,7 +82,7 @@ def cli(ctx: click.Context, log_level: str) -> None:
     ctx.obj["logger"] = logging.getLogger("quant-algo")
 
 
-# ── Stage 1: fetch ────────────────────────────────────────────────────────────
+# Stage 1: fetch
 
 @cli.command()
 @click.option("--ticker",   required=True,          help="Ticker symbol, e.g. AAPL")
@@ -104,7 +104,7 @@ def fetch(ctx: click.Context, ticker: str, date_from: str, date_to: str,
     click.echo("  → Implement src/data/ in Stage 1.")
 
 
-# ── Stage 2: indicators ───────────────────────────────────────────────────────
+# Stage 2: indicators
 
 @cli.command()
 @click.option("--ticker",     required=True, help="Ticker symbol")
@@ -124,8 +124,7 @@ def indicators(ctx: click.Context, ticker: str, indicators: str, period: int) ->
     click.echo("  → Implement src/indicators/ in Stage 2.")
 
 
-# ── Stage 3: signals ──────────────────────────────────────────────────────────
-
+# Stage 3: signals
 @cli.command()
 @click.option("--ticker",   required=True, help="Ticker symbol")
 @click.option("--strategy", required=True, help="Strategy key, e.g. ema_cross")
@@ -143,7 +142,7 @@ def signals(ctx: click.Context, ticker: str, strategy: str,
     click.echo("  → Implement src/signals/ and strategies/ in Stage 3.")
 
 
-# ── Stage 4: backtest ─────────────────────────────────────────────────────────
+# Stage 4: backtest 
 
 @cli.command()
 @click.option("--ticker",   required=True,          help="Ticker symbol")
@@ -171,7 +170,7 @@ def backtest(ctx: click.Context, ticker: str, strategy: str, date_from: str,
     click.echo("  → Implement src/backtest/ in Stage 4.")
 
 
-# ── Stage 5: trade ────────────────────────────────────────────────────────────
+# Stage 5: trade 
 
 @cli.command()
 @click.option("--ticker",   required=True, help="Ticker symbol")
