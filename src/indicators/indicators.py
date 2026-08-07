@@ -27,10 +27,8 @@ import pandas_ta as ta
 
 logger = logging.getLogger(__name__)
 
-# ─────────────────────────────────────────────────────────────────────────────
 # Individual Indicator Functions
 # Each returns the DataFrame in-place with new column(s) appended.
-# ─────────────────────────────────────────────────────────────────────────────
 
 def compute_rsi(df: pd.DataFrame, period: int = 14) -> pd.DataFrame:
     """
@@ -189,11 +187,8 @@ def compute_vwap(df: pd.DataFrame) -> pd.DataFrame:
     logger.debug(f"VWAP | last={df['vwap'].iloc[-1]:.2f}")
     return df
 
-
-# ─────────────────────────────────────────────────────────────────────────────
 # Indicator Registry
 # Maps uppercase indicator name → (function, param_section_in_settings_yaml)
-# ─────────────────────────────────────────────────────────────────────────────
 
 REGISTRY: dict[str, dict] = {
     "RSI": {
@@ -235,9 +230,7 @@ REGISTRY: dict[str, dict] = {
 }
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # Master Compute Function
-# ─────────────────────────────────────────────────────────────────────────────
 
 def compute(
     df: pd.DataFrame,
