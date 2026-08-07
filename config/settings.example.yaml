@@ -1,16 +1,14 @@
-# ─────────────────────────────────────────────────────────────────────────────
 # settings.example.yaml — Safe template. Copy to settings.yaml and adjust.
 # settings.yaml is git-ignored and should NEVER be committed.
-# ─────────────────────────────────────────────────────────────────────────────
 
-# ── Data ──────────────────────────────────────────────────────────────────────
+# Data
 data:
   default_source: polygon          # polygon | yfinance
   timeframe: "1Day"                # Polygon timeframe string
   cache_dir: data/raw              # Local cache directory (git-ignored)
   cache_format: csv                # csv | parquet
 
-# ── Indicators ────────────────────────────────────────────────────────────────
+# Indicators 
 indicators:
   rsi:
     period: 14
@@ -27,20 +25,20 @@ indicators:
   atr:
     period: 14
 
-# ── Signals / Strategy ────────────────────────────────────────────────────────
+# Signals / Strategy 
 signals:
   default_strategy: ema_cross      # Strategy key used by signal generator
   rsi_overbought: 70
   rsi_oversold: 30
 
-# ── Backtesting ───────────────────────────────────────────────────────────────
+# Backtesting 
 backtest:
   engine: backtesting              # backtesting | vectorbt
   initial_cash: 10000
   commission: 0.001                # 0.1% per trade
   results_dir: results             # git-ignored output folder
 
-# ── Execution ─────────────────────────────────────────────────────────────────
+# Execution 
 execution:
   mode: paper                      # paper | live  — DO NOT change to live without extensive testing
   max_position_pct: 0.10           # Max 10% of portfolio per position
