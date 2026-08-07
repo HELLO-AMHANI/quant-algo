@@ -1,22 +1,18 @@
-# Data Sources 
-polygon-api-client==1.14.2
-yfinance==0.2.54
-
-# Indicators 
-pandas-ta==0.3.14b
-
-# Backtesting 
-backtesting==0.3.3
-vectorbt==0.26.2
-
-# Execution 
-alpaca-trade-api==3.3.0
-
-# CLI & Config 
+# ── Stages 0-2: Core ──────────────────────────────────────────────────────────
+# NOTE: polygon-api-client removed — conflicts with yfinance over websockets.
+#       polygon_client.py now calls Polygon REST API directly via requests.
+requests>=2.28.0
+yfinance>=1.0.0
+pandas-ta==0.4.71b0
 click==8.1.8
 python-dotenv==1.0.1
 pyyaml==6.0.2
+pandas>=2.0.0
+numpy>=1.26.0
 
-# Core Data Stack 
-pandas==2.2.3
-numpy==1.26.4
+# ── Stage 4: Backtesting (uncomment when you reach Stage 4) ───────────────────
+# backtesting==0.3.3
+# vectorbt==0.26.2
+
+# ── Stage 5: Execution (uncomment when you reach Stage 5) ─────────────────────
+# alpaca-trade-api==3.3.0
