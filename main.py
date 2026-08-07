@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 import click
 import pandas as pd
 
-# ── Bootstrap ─────────────────────────────────────────────────────────────────
+# Bootstrap 
 
 # Load .env from project root
 load_dotenv()
@@ -62,7 +62,7 @@ def setup_logging(level: str = "INFO") -> None:
     )
 
 
-# ── CLI Root ──────────────────────────────────────────────────────────────────
+# CLI Root 
 
 @click.group()
 @click.version_option(version="0.1.0", prog_name="quant-algo")
@@ -83,7 +83,7 @@ def cli(ctx: click.Context, log_level: str) -> None:
     ctx.obj["logger"] = logging.getLogger("quant-algo")
 
 
-# ── Stage 1: fetch ────────────────────────────────────────────────────────────
+# Stage 1: fetch 
 
 @cli.command()
 @click.option("--ticker",      required=True,  help="Ticker symbol, e.g. AAPL")
@@ -129,7 +129,7 @@ def fetch(ctx: click.Context, ticker: str, date_from: str, date_to: str,
         click.echo(click.style("No data returned. Check ticker and date range.", fg="yellow"))
         return
 
-    # ── Summary ───────────────────────────────────────────────────────────────
+    # Summary 
     click.echo(click.style("✓ Fetch complete", fg="green"))
     click.echo(f"  Ticker    : {ticker.upper()}")
     click.echo(f"  Source    : {source}")
@@ -144,7 +144,7 @@ def fetch(ctx: click.Context, ticker: str, date_from: str, date_to: str,
         click.echo(df.head().to_string())
 
 
-# ── Stage 2: indicators ───────────────────────────────────────────────────────
+# Stage 2: indicators 
 
 @cli.command()
 @click.option("--ticker",     required=True, help="Ticker symbol, e.g. AAPL")
@@ -177,7 +177,7 @@ def indicators(ctx: click.Context, ticker: str, date_from: str, date_to: str,
 
     click.echo(f"\nIndicators: {', '.join(ind_list)}  |  {ticker.upper()}  |  {date_from} → {date_to}\n")
 
-    # ── Load data ─────────────────────────────────────────────────────────────
+    # Load data 
     try:
         dm = DataManager()
         df = dm.get_ohlcv(ticker, date_from, date_to, source=source)
@@ -189,7 +189,7 @@ def indicators(ctx: click.Context, ticker: str, date_from: str, date_to: str,
         click.echo(click.style("No data. Run fetch first.", fg="yellow"))
         return
 
-    # ── Compute ───────────────────────────────────────────────────────────────
+    # Compute 
     base_cols = set(df.columns)
     try:
         df_ind = compute(df, ind_list, config=config, period_override=period)
@@ -197,7 +197,7 @@ def indicators(ctx: click.Context, ticker: str, date_from: str, date_to: str,
         click.echo(click.style(f"[ERROR] {e}", fg="red"))
         raise SystemExit(1)
 
-    # ── Display ───────────────────────────────────────────────────────────────
+    # Display 
     # New columns = anything added by compute() + vwap if it was filled in
     indicator_cols = [
         c for c in df_ind.columns
@@ -225,7 +225,7 @@ def indicators(ctx: click.Context, ticker: str, date_from: str, date_to: str,
             click.echo(f"  {col:<20}: {last[col]:.4f}")
 
 
-# ── Stage 3: signals ──────────────────────────────────────────────────────────
+# Stage 3: signals 
 
 @cli.command()
 @click.option("--ticker",   required=True, help="Ticker symbol")
@@ -244,7 +244,7 @@ def signals(ctx: click.Context, ticker: str, strategy: str,
     click.echo("  → Implement src/signals/ and strategies/ in Stage 3.")
 
 
-# ── Stage 4: backtest ─────────────────────────────────────────────────────────
+# Stage 4: backtest 
 
 @cli.command()
 @click.option("--ticker",   required=True,          help="Ticker symbol")
