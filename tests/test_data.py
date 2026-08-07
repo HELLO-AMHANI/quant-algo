@@ -20,7 +20,7 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timezone
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# Helpers 
 
 EXPECTED_COLUMNS = {"open", "high", "low", "close", "volume", "vwap"}
 
@@ -55,9 +55,7 @@ def _mock_ohlcv(ticker: str = "AAPL", n: int = 10) -> pd.DataFrame:
     return df
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # YFinanceClient Tests
-# ─────────────────────────────────────────────────────────────────────────────
 
 class TestYFinanceClient:
 
@@ -151,9 +149,7 @@ class TestYFinanceClient:
         assert_ohlcv_schema(df)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # DataManager Tests — fully mocked, no network
-# ─────────────────────────────────────────────────────────────────────────────
 
 class TestDataManager:
 
@@ -172,7 +168,7 @@ class TestDataManager:
         with patch("src.data.data_manager.DataManager._fetch", side_effect=_fake_fetch) as m:
             yield m
 
-    # ── Cache behaviour ───────────────────────────────────────────────────────
+    # Cache behaviour 
 
     def test_cache_miss_then_hit(self, tmp_dm, mock_fetch):
         """First call fetches and caches; second call loads from CSV cache."""
@@ -233,9 +229,7 @@ class TestDataManager:
         assert files[0] == "AAPL_2023-01-01_2023-06-01_1Day_yfinance.csv"
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # PolygonClient Tests — auth/error handling + schema (_to_dataframe)
-# ─────────────────────────────────────────────────────────────────────────────
 
 class TestPolygonClientErrors:
 
