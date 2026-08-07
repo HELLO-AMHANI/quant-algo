@@ -116,31 +116,6 @@ python main.py trade --ticker AAPL --strategy ema_cross --mode paper
 
 ---
 
-## Project Structure
-
-```
-quant-algo/
-├── .env.example               ← safe template (committed)
-├── .env                       ← your real secrets (git-ignored)
-├── config/
-│   ├── settings.example.yaml  ← safe template (committed)
-│   └── settings.yaml          ← your real config (git-ignored)
-├── src/
-│   ├── data/                  ← Stage 1: polygon + yfinance clients
-│   ├── indicators/            ← Stage 2: pandas-ta wrappers
-│   ├── signals/               ← Stage 3: signal generators
-│   ├── backtest/              ← Stage 4: backtesting runner
-│   └── execution/             ← Stage 5: Alpaca order management
-├── strategies/                ← Strategy implementations
-├── tests/                     ← Unit tests
-├── logs/                      ← Runtime logs (git-ignored)
-├── results/                   ← Backtest outputs (git-ignored)
-├── requirements.txt
-└── main.py                    ← CLI entry point
-```
-
----
-
 ## License
 
 Private — AMHANi Enterprise
