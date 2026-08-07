@@ -24,7 +24,7 @@ A CLI-first quantitative trading pipeline built in Python. Fetches market data, 
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/<your-username>/quant-algo.git
+git clone https://github.com/QUANT-ALGO/quant-algo.git
 cd quant-algo
 ```
 
