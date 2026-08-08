@@ -12,7 +12,7 @@ A CLI-first quantitative trading pipeline built in Python. Fetches market data, 
 |-------|-------|--------|
 | 0 | Repo & Environment | ✅ Complete |
 | 1 | Data Layer | ✅ Complete |
-| 2 | Indicators Engine | 🔲 Pending |
+| 2 | Indicators Engine | ✅ Complete |
 | 3 | Signal Generation | 🔲 Pending |
 | 4 | Backtesting | 🔲 Pending |
 | 5 | Execution (Paper → Live) | 🔲 Pending |
@@ -88,7 +88,7 @@ python main.py --help
 python main.py fetch --ticker AAPL --from 2023-01-01 --to 2024-01-01 --source yfinance
 
 # Compute indicators (Stage 2)
-python main.py indicators --ticker AAPL --indicators RSI,EMA --period 14
+python main.py indicators --ticker AAPL --from 2023-01-01 --to 2024-01-01 --indicators RSI,EMA --period 14
 
 # Generate signals (Stage 3)
 python main.py signals --ticker AAPL --strategy ema_cross
