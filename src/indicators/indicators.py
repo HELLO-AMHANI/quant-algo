@@ -37,6 +37,7 @@ def compute_rsi(df: pd.DataFrame, period: int = 14) -> pd.DataFrame:
     Adds column: rsi_{period}   e.g. rsi_14
     Range: 0–100. Overbought > 70, Oversold < 30.
     """
+    df   = df.copy()
     col  = f"rsi_{period}"
     raw  = ta.rsi(df["close"], length=period)
     df[col] = raw
@@ -55,6 +56,7 @@ def compute_ema(
     Adds columns: ema_{fast}, ema_{slow}   e.g. ema_9, ema_21
     Crossover signal: ema_fast > ema_slow → bullish.
     """
+    df = df.copy()
     df[f"ema_{fast}"] = ta.ema(df["close"], length=fast)
     df[f"ema_{slow}"] = ta.ema(df["close"], length=slow)
     logger.debug(
@@ -79,6 +81,7 @@ def compute_macd(
       macd_signal — Signal line (EMA of MACD line)
       macd_hist   — Histogram (macd_line - macd_signal)
     """
+    df  = df.copy()
     raw = ta.macd(df["close"], fast=fast, slow=slow, signal=signal)
     if raw is None or raw.empty:
         logger.warning("MACD returned no data — not enough rows?")
@@ -117,6 +120,7 @@ def compute_bollinger(
       bb_bandwidth  — Band width (volatility proxy)
       bb_percent    — %B: where price sits within the bands (0–1, can exceed)
     """
+    df  = df.copy()
     raw = ta.bbands(df["close"], length=period, std=std_dev)
     if raw is None or raw.empty:
         logger.warning("Bollinger Bands returned no data.")
@@ -158,6 +162,7 @@ def compute_atr(df: pd.DataFrame, period: int = 14) -> pd.DataFrame:
     Adds column: atr_{period}   e.g. atr_14
     Higher ATR = higher volatility.
     """
+    df  = df.copy()
     col = f"atr_{period}"
     raw = ta.atr(df["high"], df["low"], df["close"], length=period)
     df[col] = raw
@@ -174,6 +179,7 @@ def compute_vwap(df: pd.DataFrame) -> pd.DataFrame:
     a cumulative VWAP which still serves as a useful dynamic support/resistance level.
     Requires 'volume' column — skipped if absent.
     """
+    df = df.copy()
     if "volume" not in df.columns or df["volume"].isna().all():
         logger.warning("VWAP skipped — volume column missing or all NaN.")
         return df

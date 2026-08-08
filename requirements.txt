@@ -9,6 +9,7 @@ python-dotenv==1.0.1
 pyyaml==6.0.2
 pandas>=2.0.0
 numpy>=1.26.0
+pytest==8.3.5
 
 # ── Stage 4: Backtesting (uncomment when you reach Stage 4) ───────────────────
 # backtesting==0.3.3
