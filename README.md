@@ -112,8 +112,6 @@ python main.py trade --ticker AAPL --strategy ema_cross --mode paper
 | `ALPACA_BASE_URL` | Alpaca endpoint (paper or live) |
 | `ENV` | `development` or `production` |
 
-> ⚠️ Never commit `.env` or `config/settings.yaml`. Both are in `.gitignore`.
-
 ---
 
 ## License
