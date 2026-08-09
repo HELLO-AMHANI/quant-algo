@@ -13,7 +13,7 @@ A CLI-first quantitative trading pipeline built in Python. Fetches market data, 
 | 0 | Repo & Environment | ✅ Complete |
 | 1 | Data Layer | ✅ Complete |
 | 2 | Indicators Engine | ✅ Complete |
-| 3 | Signal Generation | ✅ Complete |
+| 3 | Signal Generation | 🔲 Pending |
 | 4 | Backtesting | 🔲 Pending |
 | 5 | Execution (Paper → Live) | 🔲 Pending |
 
@@ -24,7 +24,7 @@ A CLI-first quantitative trading pipeline built in Python. Fetches market data, 
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/<your-username>/quant-algo.git
+git clone https://github.com/QUANT-ALGO/quant-algo.git
 cd quant-algo
 ```
 
@@ -85,10 +85,10 @@ All commands support `--help` for full usage details.
 python main.py --help
 
 # Fetch OHLCV data (Stage 1)
-python main.py fetch --ticker AAPL --from 2023-01-01 --to 2024-01-01 --source polygon
+python main.py fetch --ticker AAPL --from 2023-01-01 --to 2024-01-01 --source yfinance
 
 # Compute indicators (Stage 2)
-python main.py indicators --ticker AAPL --indicators RSI,EMA --period 14
+python main.py indicators --ticker AAPL --from 2023-01-01 --to 2024-01-01 --indicators RSI,EMA --period 14
 
 # Generate signals (Stage 3)
 python main.py signals --ticker AAPL --strategy ema_cross
@@ -111,33 +111,6 @@ python main.py trade --ticker AAPL --strategy ema_cross --mode paper
 | `ALPACA_SECRET_KEY` | Alpaca secret key |
 | `ALPACA_BASE_URL` | Alpaca endpoint (paper or live) |
 | `ENV` | `development` or `production` |
-
-> ⚠️ Never commit `.env` or `config/settings.yaml`. Both are in `.gitignore`.
-
----
-
-## Project Structure
-
-```
-quant-algo/
-├── .env.example               ← safe template (committed)
-├── .env                       ← your real secrets (git-ignored)
-├── config/
-│   ├── settings.example.yaml  ← safe template (committed)
-│   └── settings.yaml          ← your real config (git-ignored)
-├── src/
-│   ├── data/                  ← Stage 1: polygon + yfinance clients
-│   ├── indicators/            ← Stage 2: pandas-ta wrappers
-│   ├── signals/               ← Stage 3: signal generators
-│   ├── backtest/              ← Stage 4: backtesting runner
-│   └── execution/             ← Stage 5: Alpaca order management
-├── strategies/                ← Strategy implementations
-├── tests/                     ← Unit tests
-├── logs/                      ← Runtime logs (git-ignored)
-├── results/                   ← Backtest outputs (git-ignored)
-├── requirements.txt
-└── main.py                    ← CLI entry point
-```
 
 ---
 
