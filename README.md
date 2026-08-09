@@ -91,7 +91,8 @@ python main.py fetch --ticker AAPL --from 2023-01-01 --to 2024-01-01 --source yf
 python main.py indicators --ticker AAPL --from 2023-01-01 --to 2024-01-01 --indicators RSI,EMA --period 14
 
 # Generate signals (Stage 3)
-python main.py signals --ticker AAPL --strategy ema_cross
+python main.py signals --ticker AAPL --strategy ema_cross \
+  --from 2023-01-01 --to 2024-01-01
 
 # Run backtest (Stage 4)
 python main.py backtest --ticker AAPL --strategy ema_cross --from 2022-01-01
