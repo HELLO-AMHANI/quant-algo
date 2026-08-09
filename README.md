@@ -13,7 +13,7 @@ A CLI-first quantitative trading pipeline built in Python. Fetches market data, 
 | 0 | Repo & Environment | ✅ Complete |
 | 1 | Data Layer | ✅ Complete |
 | 2 | Indicators Engine | ✅ Complete |
-| 3 | Signal Generation | 🔲 Pending |
+| 3 | Signal Generation | ✅ Complete |
 | 4 | Backtesting | 🔲 Pending |
 | 5 | Execution (Paper → Live) | 🔲 Pending |
 
