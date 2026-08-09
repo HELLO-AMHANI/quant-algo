@@ -21,7 +21,7 @@ from dotenv import load_dotenv
 import click
 import pandas as pd
 
-# Bootstrap 
+# ── Bootstrap ─────────────────────────────────────────────────────────────────
 
 # Load .env from project root
 load_dotenv()
@@ -62,7 +62,7 @@ def setup_logging(level: str = "INFO") -> None:
     )
 
 
-# CLI Root 
+# ── CLI Root ──────────────────────────────────────────────────────────────────
 
 @click.group()
 @click.version_option(version="0.1.0", prog_name="quant-algo")
@@ -83,7 +83,7 @@ def cli(ctx: click.Context, log_level: str) -> None:
     ctx.obj["logger"] = logging.getLogger("quant-algo")
 
 
-# Stage 1: fetch 
+# ── Stage 1: fetch ────────────────────────────────────────────────────────────
 
 @cli.command()
 @click.option("--ticker",      required=True,  help="Ticker symbol, e.g. AAPL")
@@ -129,7 +129,7 @@ def fetch(ctx: click.Context, ticker: str, date_from: str, date_to: str,
         click.echo(click.style("No data returned. Check ticker and date range.", fg="yellow"))
         return
 
-    # Summary 
+    # ── Summary ───────────────────────────────────────────────────────────────
     click.echo(click.style("✓ Fetch complete", fg="green"))
     click.echo(f"  Ticker    : {ticker.upper()}")
     click.echo(f"  Source    : {source}")
@@ -144,7 +144,7 @@ def fetch(ctx: click.Context, ticker: str, date_from: str, date_to: str,
         click.echo(df.head().to_string())
 
 
-# Stage 2: indicators 
+# ── Stage 2: indicators ───────────────────────────────────────────────────────
 
 @cli.command()
 @click.option("--ticker",     required=True, help="Ticker symbol, e.g. AAPL")
@@ -177,7 +177,7 @@ def indicators(ctx: click.Context, ticker: str, date_from: str, date_to: str,
 
     click.echo(f"\nIndicators: {', '.join(ind_list)}  |  {ticker.upper()}  |  {date_from} → {date_to}\n")
 
-    # Load data 
+    # ── Load data ─────────────────────────────────────────────────────────────
     try:
         dm = DataManager()
         df = dm.get_ohlcv(ticker, date_from, date_to, source=source)
@@ -189,7 +189,7 @@ def indicators(ctx: click.Context, ticker: str, date_from: str, date_to: str,
         click.echo(click.style("No data. Run fetch first.", fg="yellow"))
         return
 
-    # Compute 
+    # ── Compute ───────────────────────────────────────────────────────────────
     base_cols = set(df.columns)
     try:
         df_ind = compute(df, ind_list, config=config, period_override=period)
@@ -197,7 +197,7 @@ def indicators(ctx: click.Context, ticker: str, date_from: str, date_to: str,
         click.echo(click.style(f"[ERROR] {e}", fg="red"))
         raise SystemExit(1)
 
-    # Display 
+    # ── Display ───────────────────────────────────────────────────────────────
     # New columns = anything added by compute() + vwap if it was filled in
     indicator_cols = [
         c for c in df_ind.columns
@@ -225,26 +225,96 @@ def indicators(ctx: click.Context, ticker: str, date_from: str, date_to: str,
             click.echo(f"  {col:<20}: {last[col]:.4f}")
 
 
-# Stage 3: signals 
+# ── Stage 3: signals ──────────────────────────────────────────────────────────
 
 @cli.command()
-@click.option("--ticker",   required=True, help="Ticker symbol")
-@click.option("--strategy", required=True, help="Strategy key, e.g. ema_cross")
-@click.option("--from",     "date_from",   default=None, help="Start date YYYY-MM-DD (optional)")
-@click.option("--to",       "date_to",     default=None, help="End date   YYYY-MM-DD (optional)")
+@click.option("--ticker",   required=True,  help="Ticker symbol, e.g. AAPL")
+@click.option("--strategy", required=True,  help="Strategy key: ema_cross | rsi_mean_reversion")
+@click.option("--from",     "date_from", required=True, help="Start date YYYY-MM-DD")
+@click.option("--to",       "date_to",   required=True, help="End date   YYYY-MM-DD")
+@click.option("--source",   default="yfinance",
+              help="Data source: polygon | yfinance",
+              type=click.Choice(["polygon", "yfinance"], case_sensitive=False))
+@click.option("--tail",     default=10, type=int,
+              help="Number of recent signal rows to display (default: 10)")
+@click.option("--list-strategies", "list_strats", is_flag=True,
+              help="List all available strategies and exit")
 @click.pass_context
 def signals(ctx: click.Context, ticker: str, strategy: str,
-            date_from: str, date_to: str) -> None:
-    """Generate BUY/SELL/HOLD signals for a strategy. (Stage 3)"""
+            date_from: str, date_to: str, source: str,
+            tail: int, list_strats: bool) -> None:
+    """Generate BUY/SELL/HOLD signals from a strategy. (Stage 3)"""
+    from src.data.data_manager           import DataManager
+    from src.signals.signal_generator   import generate_signals, list_strategies, signal_summary
+
     logger = ctx.obj["logger"]
-    logger.info(f"[STUB] signals | ticker={ticker} strategy={strategy}")
-    click.echo(click.style(f"[Stage 3 — STUB] signals not yet implemented.", fg="cyan"))
-    click.echo(f"  Ticker   : {ticker}")
-    click.echo(f"  Strategy : {strategy}")
-    click.echo("  → Implement src/signals/ and strategies/ in Stage 3.")
+    config = ctx.obj["config"]
+
+    if list_strats:
+        click.echo("Available strategies:")
+        for s in list_strategies():
+            click.echo(f"  {s}")
+        return
+
+    click.echo(
+        f"\nSignals | {ticker.upper()} | {date_from} → {date_to} | {strategy}\n"
+    )
+
+    # ── Load data ─────────────────────────────────────────────────────────────
+    try:
+        dm = DataManager()
+        df = dm.get_ohlcv(ticker, date_from, date_to, source=source)
+    except Exception as e:
+        click.echo(click.style(f"[ERROR] Data load failed: {e}", fg="red"))
+        raise SystemExit(1)
+
+    if df.empty:
+        click.echo(click.style("No data returned. Run fetch first.", fg="yellow"))
+        return
+
+    # ── Generate signals ──────────────────────────────────────────────────────
+    try:
+        df_sig = generate_signals(df, strategy_name=strategy, config=config)
+    except ValueError as e:
+        click.echo(click.style(f"[ERROR] {e}", fg="red"))
+        raise SystemExit(1)
+
+    # ── Summary ───────────────────────────────────────────────────────────────
+    summary = signal_summary(df_sig)
+
+    click.echo(click.style("✓ Signals generated", fg="green"))
+    click.echo(f"  Ticker       : {ticker.upper()}")
+    click.echo(f"  Strategy     : {strategy}")
+    click.echo(f"  Total bars   : {summary['total_bars']:,}")
+    click.echo(f"  BUY signals  : {summary['buy_signals']}")
+    click.echo(f"  SELL signals : {summary['sell_signals']}")
+    click.echo(f"  Hold bars    : {summary['hold_bars']:,}")
+    click.echo(f"  Signal rate  : {summary['signal_rate_pct']}%")
+    click.echo(f"  First signal : {summary['first_signal_date']}")
+    click.echo(f"  Last signal  : {summary['last_signal_date']}")
+
+    # ── Show only bars where a signal fired ───────────────────────────────────
+    active = df_sig[df_sig["signal"] != 0].copy()
+    if active.empty:
+        click.echo(click.style("\n  No signals fired in this date range.", fg="yellow"))
+        return
+
+    active["action"] = active["signal"].map({1: "BUY", -1: "SELL"})
+    indicator_extras = [c for c in active.columns
+                        if c not in {"open","high","low","close","volume","vwap",
+                                     "signal","strategy","action"}]
+    display_cols = ["close"] + indicator_extras[:4] + ["action"]
+    available    = [c for c in display_cols if c in active.columns]
+
+    click.echo(
+        f"\n── Last {min(tail, len(active))} active signals "
+        f"({len(active)} total) ──────────────────────────"
+    )
+    click.echo(active[available].tail(tail).round(4).to_string())
+    click.echo("")
 
 
-# Stage 4: backtest 
+# ── Stage 4: backtest ─────────────────────────────────────────────────────────
 
 @cli.command()
 @click.option("--ticker",   required=True,          help="Ticker symbol")
