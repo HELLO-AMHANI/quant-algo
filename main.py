@@ -317,29 +317,151 @@ def signals(ctx: click.Context, ticker: str, strategy: str,
 # ── Stage 4: backtest ─────────────────────────────────────────────────────────
 
 @cli.command()
-@click.option("--ticker",   required=True,          help="Ticker symbol")
-@click.option("--strategy", required=True,          help="Strategy key, e.g. ema_cross")
-@click.option("--from",     "date_from", required=True, help="Start date YYYY-MM-DD")
-@click.option("--to",       "date_to",   default=None,  help="End date   YYYY-MM-DD (optional)")
-@click.option("--engine",   default=None,
-              help="Backtest engine: backtesting | vectorbt (overrides settings.yaml)",
-              type=click.Choice(["backtesting", "vectorbt"], case_sensitive=False))
-@click.option("--cash",     default=None, type=float,   help="Starting cash (overrides settings.yaml)")
+@click.option("--ticker",    required=True,  help="Ticker symbol, e.g. AAPL")
+@click.option("--strategy",  required=True,
+              help="Strategy slug or comma-separated list for comparison: ema_cross,rsi_mean_reversion")
+@click.option("--from",      "date_from", required=True,  help="Start date YYYY-MM-DD")
+@click.option("--to",        "date_to",   default=None,   help="End date YYYY-MM-DD (optional)")
+@click.option("--source",    default="yfinance",
+              help="Data source: polygon | yfinance",
+              type=click.Choice(["polygon", "yfinance"], case_sensitive=False))
+@click.option("--cash",      default=None, type=float,
+              help="Starting cash — overrides settings.yaml (default: 10000)")
+@click.option("--commission", default=None, type=float,
+              help="Per-trade commission fraction — overrides settings.yaml (default: 0.001)")
+@click.option("--no-save",   is_flag=True, default=False,
+              help="Skip saving results to results/ directory")
 @click.pass_context
 def backtest(ctx: click.Context, ticker: str, strategy: str, date_from: str,
-             date_to: str, engine: str, cash: float) -> None:
-    """Run a backtest and output performance metrics. (Stage 4)"""
+             date_to: str, source: str, cash: float,
+             commission: float, no_save: bool) -> None:
+    """Run a backtest and display performance metrics. (Stage 4)
+
+    Single strategy:
+      python main.py backtest --ticker AAPL --strategy ema_cross --from 2022-01-01
+
+    Compare two strategies side-by-side:
+      python main.py backtest --ticker AAPL --strategy ema_cross,rsi_mean_reversion --from 2022-01-01
+    """
+    from src.data.data_manager      import DataManager
+    from src.backtest.runner        import run_backtest, compare_strategies
+
     logger = ctx.obj["logger"]
-    config  = ctx.obj["config"]
-    engine  = engine or config.get("backtest", {}).get("engine", "backtesting")
-    cash    = cash   or config.get("backtest", {}).get("initial_cash", 10000)
-    logger.info(f"[STUB] backtest | ticker={ticker} strategy={strategy} engine={engine} cash={cash}")
-    click.echo(click.style(f"[Stage 4 — STUB] backtest not yet implemented.", fg="cyan"))
-    click.echo(f"  Ticker   : {ticker}")
-    click.echo(f"  Strategy : {strategy}")
-    click.echo(f"  Engine   : {engine}")
-    click.echo(f"  Cash     : ${cash:,.2f}")
-    click.echo("  → Implement src/backtest/ in Stage 4.")
+    config = ctx.obj["config"]
+
+    cash       = cash       or config.get("backtest", {}).get("initial_cash", 10_000)
+    commission = commission or config.get("backtest", {}).get("commission",   0.001)
+    save       = not no_save
+    results_dir = config.get("backtest", {}).get("results_dir", "results")
+
+    strategy_names = [s.strip() for s in strategy.split(",")]
+    multi          = len(strategy_names) > 1
+
+    # ── Load data ─────────────────────────────────────────────────────────────
+    click.echo(f"\nBacktest | {ticker.upper()} | {date_from} → {date_to or 'today'}\n")
+    try:
+        dm = DataManager()
+        df = dm.get_ohlcv(ticker, date_from, date_to or "2099-01-01", source=source)
+    except Exception as e:
+        click.echo(click.style(f"[ERROR] Data load failed: {e}", fg="red"))
+        raise SystemExit(1)
+
+    if df.empty:
+        click.echo(click.style("No data returned. Run fetch first.", fg="yellow"))
+        return
+
+    click.echo(f"  Loaded {len(df):,} bars | ${cash:,.0f} starting cash | {commission*100:.2f}% commission\n")
+
+    # ── Single or multi-strategy ──────────────────────────────────────────────
+    METRIC_LABELS = {
+        "total_return_pct":      "Total Return %",
+        "buy_hold_return_pct":   "Buy & Hold %",
+        "annualised_return_pct": "Ann. Return %",
+        "sharpe_ratio":          "Sharpe Ratio",
+        "sortino_ratio":         "Sortino Ratio",
+        "max_drawdown_pct":      "Max Drawdown %",
+        "win_rate_pct":          "Win Rate %",
+        "profit_factor":         "Profit Factor",
+        "total_trades":          "# Trades",
+        "exposure_time_pct":     "Exposure %",
+        "equity_final":          "Final Equity $",
+    }
+
+    if not multi:
+        # ── Single strategy ───────────────────────────────────────────────────
+        try:
+            result = run_backtest(
+                df, strategy_names[0],
+                config=config, cash=cash,
+                commission=commission, results_dir=results_dir, save=save,
+            )
+        except ValueError as e:
+            click.echo(click.style(f"[ERROR] {e}", fg="red"))
+            raise SystemExit(1)
+
+        m = result["metrics"]
+        click.echo(click.style("✓ Backtest complete", fg="green"))
+        click.echo(f"  Strategy : {strategy_names[0]}")
+        click.echo("")
+
+        for key, label in METRIC_LABELS.items():
+            val = m.get(key, "—")
+            if isinstance(val, float):
+                line = f"  {label:<22}: {val:>10.2f}"
+            else:
+                line = f"  {label:<22}: {val:>10}"
+            # Colour returns green/red
+            if key == "total_return_pct":
+                colour = "green" if val > 0 else "red"
+                click.echo(click.style(line, fg=colour))
+            elif key == "max_drawdown_pct":
+                click.echo(click.style(line, fg="red"))
+            else:
+                click.echo(line)
+
+        if save and result.get("json_path"):
+            click.echo(f"\n  Results → {result['json_path'].name}")
+            click.echo(f"           → {result['csv_path'].name}")
+
+    else:
+        # ── Multi-strategy comparison ─────────────────────────────────────────
+        click.echo(f"  Comparing: {', '.join(strategy_names)}\n")
+        try:
+            comparison = compare_strategies(
+                df, strategy_names,
+                config=config, cash=cash,
+                commission=commission, results_dir=results_dir,
+            )
+        except Exception as e:
+            click.echo(click.style(f"[ERROR] {e}", fg="red"))
+            raise SystemExit(1)
+
+        # Print comparison table
+        col_w = 18
+        header = f"  {'Metric':<24}" + "".join(f"{n[:col_w]:>{col_w}}" for n in strategy_names)
+        click.echo(click.style(header, bold=True))
+        click.echo("  " + "─" * (24 + col_w * len(strategy_names)))
+
+        for key, label in METRIC_LABELS.items():
+            row = f"  {label:<24}"
+            for name in strategy_names:
+                m   = comparison.get(name, {})
+                val = m.get(key, "ERR") if "error" not in m else "ERR"
+                if isinstance(val, float):
+                    row += f"{val:>{col_w}.2f}"
+                else:
+                    row += f"{str(val):>{col_w}}"
+            if "return" in key:
+                vals = [comparison.get(n, {}).get(key, 0) for n in strategy_names]
+                click.echo(click.style(row, fg="green" if any(v > 0 for v in vals) else "red"))
+            else:
+                click.echo(row)
+
+        click.echo("")
+        if save:
+            click.echo("  Results saved to results/")
+
+    click.echo("")
 
 
 # ── Stage 5: trade ────────────────────────────────────────────────────────────

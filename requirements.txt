@@ -12,7 +12,7 @@ numpy>=1.26.0
 pytest==8.3.5
 
 # ── Stage 4: Backtesting (uncomment when you reach Stage 4) ───────────────────
-# backtesting==0.3.3
+# backtesting==0.6.6
 # vectorbt==0.26.2
 
 # ── Stage 5: Execution (uncomment when you reach Stage 5) ─────────────────────
