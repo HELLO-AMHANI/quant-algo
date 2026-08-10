@@ -86,6 +86,8 @@ python main.py --help
 
 # Fetch OHLCV data (Stage 1)
 python main.py fetch --ticker AAPL --from 2023-01-01 --to 2024-01-01 --source yfinance
+python main.py fetch --ticker EURUSD=X --from 2023-01-01 --to 2024-01-01 --source yfinance
+python main.py fetch --ticker BTC-USD --from 2023-01-01 --to 2024-01-01 --source yfinance
 
 # Compute indicators (Stage 2)
 python main.py indicators --ticker AAPL --from 2023-01-01 --to 2024-01-01 --indicators RSI,EMA --period 14
