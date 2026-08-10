@@ -98,6 +98,8 @@ python main.py signals --ticker AAPL --strategy ema_cross \
 
 # Run backtest (Stage 4)
 python main.py backtest --ticker AAPL --strategy ema_cross --from 2022-01-01
+python main.py backtest --ticker AAPL \
+  --strategy ema_cross,rsi_mean_reversion --from 2022-01-01
 
 # Paper trade (Stage 5)
 python main.py trade --ticker AAPL --strategy ema_cross --mode paper
