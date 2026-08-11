@@ -106,8 +106,7 @@ python main.py indicators --ticker AAPL --from 2023-01-01 --to 2024-01-01 \
   --indicators ALL
 
 # Generate signals (Stage 3)
-python main.py signals --ticker AAPL --strategy ema_cross \
-  --from 2023-01-01 --to 2024-01-01
+
 # See all strategies available
 python main.py signals --ticker AAPL --strategy ema_cross \
   --from 2023-01-01 --to 2024-01-01 --list-strategies
@@ -139,7 +138,7 @@ python main.py backtest --ticker SPY --strategy ema_cross \
   --from 2021-01-01 --no-save
 
 # Paper trade (Stage 5)
-python main.py trade --ticker AAPL --strategy ema_cross --mode paper
+
 # Preview what would happen — no order placed
 python main.py trade --ticker AAPL --strategy ema_cross --dry-run
 
