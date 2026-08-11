@@ -85,24 +85,69 @@ All commands support `--help` for full usage details.
 python main.py --help
 
 # Fetch OHLCV data (Stage 1)
-python main.py fetch --ticker AAPL --from 2023-01-01 --to 2024-01-01 --source yfinance
+# Fetch and cache 2 years of AAPL daily bars
+python main.py fetch --ticker AAPL --from 2023-01-01 --to 2024-12-31 --source yfinance
+
+# Force re-fetch even if cached
+python main.py fetch --ticker AAPL --from 2023-01-01 --to 2024-12-31 --force
+
 python main.py fetch --ticker EURUSD=X --from 2023-01-01 --to 2024-01-01 --source yfinance
 python main.py fetch --ticker BTC-USD --from 2023-01-01 --to 2024-01-01 --source yfinance
 
 # Compute indicators (Stage 2)
 python main.py indicators --ticker AAPL --from 2023-01-01 --to 2024-01-01 --indicators RSI,EMA --period 14
 
+# Compute RSI + EMA and preview last 5 rows
+python main.py indicators --ticker AAPL --from 2023-01-01 --to 2024-01-01 \
+  --indicators RSI,EMA,MACD --tail 5
+
+# All 6 indicators at once
+python main.py indicators --ticker AAPL --from 2023-01-01 --to 2024-01-01 \
+  --indicators ALL
+
 # Generate signals (Stage 3)
 python main.py signals --ticker AAPL --strategy ema_cross \
   --from 2023-01-01 --to 2024-01-01
+# See all strategies available
+python main.py signals --ticker AAPL --strategy ema_cross \
+  --from 2023-01-01 --to 2024-01-01 --list-strategies
+
+# EMA crossover signals — shows BUY/SELL dates and signal rate
+python main.py signals --ticker AAPL --strategy ema_cross \
+  --from 2023-01-01 --to 2024-01-01
+
+# RSI mean-reversion signals
+python main.py signals --ticker TSLA --strategy rsi_mean_reversion \
+  --from 2022-01-01 --to 2024-01-01
 
 # Run backtest (Stage 4)
 python main.py backtest --ticker AAPL --strategy ema_cross --from 2022-01-01
 python main.py backtest --ticker AAPL \
   --strategy ema_cross,rsi_mean_reversion --from 2022-01-01
 
+# Single strategy — full metrics: return, Sharpe, drawdown, win rate
+python main.py backtest --ticker AAPL --strategy ema_cross \
+  --from 2022-01-01 --to 2024-01-01 --cash 10000
+
+# Side-by-side comparison table of both strategies
+python main.py backtest --ticker AAPL \
+  --strategy ema_cross,rsi_mean_reversion \
+  --from 2022-01-01 --to 2024-01-01
+
+# Skip saving results to disk
+python main.py backtest --ticker SPY --strategy ema_cross \
+  --from 2021-01-01 --no-save
+
 # Paper trade (Stage 5)
 python main.py trade --ticker AAPL --strategy ema_cross --mode paper
+# Preview what would happen — no order placed
+python main.py trade --ticker AAPL --strategy ema_cross --dry-run
+
+# Paper trade — real Alpaca paper account, zero financial risk
+python main.py trade --ticker AAPL --strategy ema_cross --mode paper
+
+# Live trade — guarded by double confirmation prompt
+python main.py trade --ticker AAPL --strategy ema_cross --mode live
 ```
 
 ---
