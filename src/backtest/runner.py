@@ -32,7 +32,6 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from backtesting import Backtest, Strategy
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +54,7 @@ def _make_signal_strategy(signal_arr: np.ndarray) -> type:
     Returns:
         A Strategy subclass ready to pass to Backtest().
     """
+    from backtesting import Strategy
     _sig = np.array(signal_arr, dtype=float)   # float required by backtesting.py I()
 
     class _SignalStrategy(Strategy):
@@ -240,6 +240,7 @@ def run_backtest(
           "json_path": Path to saved JSON (or None if save=False)
           "csv_path" : Path to saved CSV  (or None if save=False)
     """
+    from backtesting import Backtest
     from src.signals.signal_generator import generate_signals
 
     cfg    = config or {}
