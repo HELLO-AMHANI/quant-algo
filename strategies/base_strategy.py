@@ -69,10 +69,10 @@ class BaseStrategy(ABC):
         Returns True on bars where series_a crosses ABOVE series_b.
         (i.e. was below or equal on previous bar, is above now)
         """
-        above      = series_a > series_b
+        above      = (series_a > series_b).astype(bool)
         # .fillna() can return numpy scalars — cast to bool Series before ~
         # to avoid deprecated bitwise inversion on numpy booleans (~np.bool_)
-        prev_above = above.shift(1).fillna(False).astype(bool)
+        prev_above = above.shift(1, fill_value=False)
         return above & ~prev_above
 
     @staticmethod
@@ -81,8 +81,8 @@ class BaseStrategy(ABC):
         Returns True on bars where series_a crosses BELOW series_b.
         (i.e. was above on previous bar, is at or below now)
         """
-        below      = series_a < series_b
-        prev_below = below.shift(1).fillna(False).astype(bool)
+        below      = (series_a < series_b).astype(bool)
+        prev_below = below.shift(1, fill_value=False)
         return below & ~prev_below
 
     def __repr__(self) -> str:

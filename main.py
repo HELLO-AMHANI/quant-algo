@@ -467,29 +467,184 @@ def backtest(ctx: click.Context, ticker: str, strategy: str, date_from: str,
 # ── Stage 5: trade ────────────────────────────────────────────────────────────
 
 @cli.command()
-@click.option("--ticker",   required=True, help="Ticker symbol")
-@click.option("--strategy", required=True, help="Strategy key, e.g. ema_cross")
-@click.option("--mode",     default="paper",
+@click.option("--ticker",    required=True,  help="Ticker symbol, e.g. AAPL")
+@click.option("--strategy",  required=True,  help="Strategy slug: ema_cross | rsi_mean_reversion")
+@click.option("--mode",      default="paper",
               help="Execution mode: paper | live",
               type=click.Choice(["paper", "live"], case_sensitive=False))
+@click.option("--lookback",  default=100, type=int,
+              help="Number of recent bars to load for indicator warm-up (default: 100)")
+@click.option("--source",    default="yfinance",
+              help="Data source: polygon | yfinance",
+              type=click.Choice(["polygon", "yfinance"], case_sensitive=False))
+@click.option("--dry-run",   is_flag=True, default=False,
+              help="Compute signal and show intended action without placing any order")
 @click.pass_context
-def trade(ctx: click.Context, ticker: str, strategy: str, mode: str) -> None:
-    """Execute live or paper trades via Alpaca. (Stage 5)"""
+def trade(ctx: click.Context, ticker: str, strategy: str, mode: str,
+          lookback: int, source: str, dry_run: bool) -> None:
+    """Fetch latest data, generate a signal, and execute a paper or live order.
+
+    Always start in paper mode:
+      python main.py trade --ticker AAPL --strategy ema_cross --mode paper
+
+    Check what would happen without placing an order:
+      python main.py trade --ticker AAPL --strategy ema_cross --dry-run
+
+    Only switch to live after extensive paper testing:
+      python main.py trade --ticker AAPL --strategy ema_cross --mode live
+    """
+    import datetime
+    from src.data.data_manager         import DataManager
+    from src.signals.signal_generator  import generate_signals, signal_summary
+    from src.execution.alpaca_client   import AlpacaClient
+    from src.execution.order_manager   import OrderManager
+
     logger = ctx.obj["logger"]
+    config = ctx.obj["config"]
 
-    if mode == "live":
+    # ── Live-mode confirmation gate ───────────────────────────────────────────
+    if mode == "live" and not dry_run:
         click.echo(click.style(
-            "[WARN] Live mode selected. Ensure Stage 4 backtesting is complete "
-            "and results are satisfactory before proceeding.", fg="red"
+            "\n⚠  LIVE mode — real money will be used.", fg="red", bold=True
         ))
-        click.confirm("Confirm you want to trade with REAL MONEY?", abort=True)
+        click.echo("   Confirm you have reviewed Stage 4 backtest results.")
+        click.confirm("   Proceed with LIVE trading?", abort=True)
 
-    logger.info(f"[STUB] trade | ticker={ticker} strategy={strategy} mode={mode}")
-    click.echo(click.style(f"[Stage 5 — STUB] trade not yet implemented.", fg="cyan"))
-    click.echo(f"  Ticker   : {ticker}")
-    click.echo(f"  Strategy : {strategy}")
-    click.echo(f"  Mode     : {mode}")
-    click.echo("  → Implement src/execution/ in Stage 5.")
+    mode_label = click.style(f"[{mode.upper()}]", fg="yellow" if mode == "paper" else "red")
+    dry_label  = click.style(" [DRY-RUN]", fg="cyan") if dry_run else ""
+    click.echo(f"\nTrade {mode_label}{dry_label} | {ticker.upper()} | {strategy}\n")
+
+    # ── Load recent data ──────────────────────────────────────────────────────
+    date_to   = datetime.date.today().isoformat()
+    date_from = (datetime.date.today() - datetime.timedelta(days=lookback * 2)).isoformat()
+
+    try:
+        dm = DataManager()
+        df = dm.get_ohlcv(ticker, date_from, date_to, source=source)
+    except Exception as e:
+        click.echo(click.style(f"[ERROR] Data fetch failed: {e}", fg="red"))
+        raise SystemExit(1)
+
+    if df.empty or len(df) < 30:
+        click.echo(click.style("Insufficient data — need at least 30 bars.", fg="yellow"))
+        return
+
+    # Use only the most recent `lookback` bars
+    df = df.tail(lookback).copy()
+
+    # ── Generate signal ───────────────────────────────────────────────────────
+    try:
+        df_sig = generate_signals(df, strategy_name=strategy, config=config)
+    except ValueError as e:
+        click.echo(click.style(f"[ERROR] Signal generation failed: {e}", fg="red"))
+        raise SystemExit(1)
+
+    latest          = df_sig.iloc[-1]
+    latest_signal   = int(latest["signal"])
+    latest_price    = float(latest["close"])
+    latest_date     = str(df_sig.index[-1].date())
+    signal_label    = {1: "BUY ▲", -1: "SELL ▼", 0: "HOLD —"}.get(latest_signal, "?")
+    signal_colour   = {1: "green",  -1: "red",   0: "white"}.get(latest_signal, "white")
+
+    summary = signal_summary(df_sig)
+
+    click.echo(f"  Ticker        : {ticker.upper()}")
+    click.echo(f"  Strategy      : {strategy}")
+    click.echo(f"  Latest bar    : {latest_date}  close=${latest_price:,.2f}")
+    click.echo(f"  Signal        : " + click.style(signal_label, fg=signal_colour, bold=True))
+    click.echo(f"  Total signals : {summary['buy_signals']} BUY  "
+               f"{summary['sell_signals']} SELL  "
+               f"({summary['signal_rate_pct']}% signal rate)")
+    click.echo("")
+
+    if dry_run:
+        click.echo(click.style(
+            f"  [DRY-RUN] Would attempt to execute signal={latest_signal} "
+            f"at ${latest_price:,.2f}. No order placed.", fg="cyan"
+        ))
+        click.echo("")
+        return
+
+    # ── Connect to Alpaca ─────────────────────────────────────────────────────
+    try:
+        client = AlpacaClient()
+    except EnvironmentError as e:
+        click.echo(click.style(f"[ERROR] Alpaca credentials missing: {e}", fg="red"))
+        click.echo("  → Copy .env.example to .env and add your Alpaca keys.")
+        raise SystemExit(1)
+
+    # ── Account snapshot ──────────────────────────────────────────────────────
+    try:
+        account = client.get_account()
+        clock   = client.get_clock()
+    except Exception as e:
+        click.echo(click.style(f"[ERROR] Alpaca connection failed: {e}", fg="red"))
+        raise SystemExit(1)
+
+    market_status = click.style(
+        "OPEN ●" if clock["is_open"] else "CLOSED ○",
+        fg="green" if clock["is_open"] else "yellow"
+    )
+    click.echo(f"  Portfolio     : ${account['portfolio_value']:>12,.2f}")
+    click.echo(f"  Cash          : ${account['cash']:>12,.2f}")
+    click.echo(f"  Buying power  : ${account['buying_power']:>12,.2f}")
+    click.echo(f"  Market        : {market_status}")
+    click.echo("")
+
+    # ── Execute signal ────────────────────────────────────────────────────────
+    manager = OrderManager(client, config=config)
+
+    try:
+        result = manager.execute_signal(
+            ticker=ticker,
+            signal=latest_signal,
+            price=latest_price,
+        )
+    except Exception as e:
+        click.echo(click.style(f"[ERROR] Order execution failed: {e}", fg="red"))
+        logger.exception("Order execution error")
+        raise SystemExit(1)
+
+    # ── Display result ────────────────────────────────────────────────────────
+    action = result["action"]
+
+    if action == "BUY":
+        click.echo(click.style(
+            f"  ✓ BUY order submitted — {result['qty']}x {ticker.upper()} "
+            f"@ ~${latest_price:,.2f}  |  stop=${result['stop_price']:,.2f}  "
+            f"|  est. cost=${result['est_cost']:,.2f}",
+            fg="green", bold=True
+        ))
+        click.echo(f"  Order ID: {result['order_id']}")
+
+    elif action == "SELL":
+        pl_colour = "green" if result.get("est_pl_pct", 0) >= 0 else "red"
+        click.echo(click.style(
+            f"  ✓ SELL order submitted — {result['qty']}x {ticker.upper()} "
+            f"@ ~${latest_price:,.2f}  |  entry=${result['entry_price']:,.2f}  "
+            f"|  P&L≈{result.get('est_pl_pct', 0):+.2f}%",
+            fg=pl_colour, bold=True
+        ))
+        click.echo(f"  Order ID: {result['order_id']}")
+
+    elif action == "HOLD":
+        click.echo(click.style(
+            f"  — HOLD — no action on {ticker.upper()}.", fg="white"
+        ))
+
+    elif action.startswith("SKIP"):
+        reason_map = {
+            "already_in_position":     "already holding a position",
+            "pending_order_exists":    "open order already exists",
+            "insufficient_buying_power": "not enough buying power",
+            "no_position":             "no position to sell",
+        }
+        reason = reason_map.get(result.get("reason", ""), result.get("reason", ""))
+        click.echo(click.style(
+            f"  ⚠  Skipped — {reason}.", fg="yellow"
+        ))
+
+    click.echo("")
 
 
 # ── Entrypoint ────────────────────────────────────────────────────────────────
