@@ -166,3 +166,4 @@ python main.py trade --ticker AAPL --strategy ema_cross --mode live
 ## License
 
 Private — AMHANi Enterprise
+**NOTE: Most files are gitignored for privacy reasons**
